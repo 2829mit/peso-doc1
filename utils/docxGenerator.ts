@@ -10,6 +10,7 @@ import {
   BorderStyle,
   AlignmentType,
   UnderlineType,
+  VerticalAlign,
 } from "docx";
 import FileSaver from "file-saver";
 import { DocumentData } from "../types";
@@ -43,7 +44,7 @@ const createHeaderDate = (address: string, date: string) => {
           }),
           new TableCell({
             width: { size: 40, type: WidthType.PERCENTAGE },
-            verticalAlign: AlignmentType.TOP,
+            verticalAlign: VerticalAlign.TOP,
             children: [
               new Paragraph({
                 alignment: AlignmentType.RIGHT,
