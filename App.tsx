@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { DocumentData, initialData, Vehicle } from './types';
+import { DocumentData, initialData, Vehicle, Partner } from './types';
 import { PESO_ADDRESSES, OMC_OPTIONS } from './constants';
 import { DocumentPreview } from './components/DocumentPreview';
 import { Input, TextArea, Select } from './components/Input';
-import { FileText, Settings, Truck, MapPin, Building, Plus, Trash2, Download } from 'lucide-react';
+import { FileText, Settings, Truck, MapPin, Building, Plus, Trash2, Download, Users } from 'lucide-react';
 import { generateDocument } from './utils/docxGenerator';
 
 const App: React.FC = () => {
@@ -53,6 +53,26 @@ const App: React.FC = () => {
 
   const removeVehicle = (id: string) => {
     setData(prev => ({ ...prev, vehicles: prev.vehicles.filter(v => v.id !== id) }));
+  };
+
+  const handlePartnerChange = (id: string, field: keyof Partner, value: string) => {
+    setData(prev => ({
+      ...prev,
+      partners: prev.partners.map(p => p.id === id ? { ...p, [field]: value } : p)
+    }));
+  };
+
+  const addPartner = () => {
+    const newPartner: Partner = {
+      id: Date.now().toString(),
+      name: '',
+      designation: ''
+    };
+    setData(prev => ({ ...prev, partners: [...prev.partners, newPartner] }));
+  };
+
+  const removePartner = (id: string) => {
+    setData(prev => ({ ...prev, partners: prev.partners.filter(p => p.id !== id) }));
   };
 
   const handleDownload = async () => {
@@ -124,6 +144,32 @@ const App: React.FC = () => {
                 </h3>
                 <Input label="Full Name" name="authPersonName" value={data.authPersonName} onChange={handleChange} placeholder="Mr. John Doe" />
                 <Input label="Designation" name="authPersonDesignation" value={data.authPersonDesignation} onChange={handleChange} placeholder="Director / Partner" />
+              </div>
+
+              <div className="border-t border-slate-200 my-4 pt-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                    <Users className="w-4 h-4" /> Partners / Directors
+                  </h3>
+                  <button onClick={addPartner} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md font-semibold hover:bg-blue-200 flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add
+                  </button>
+                </div>
+                
+                {data.partners.map((p, idx) => (
+                  <div key={p.id} className="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3 relative group">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => removePartner(p.id)} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs font-bold text-slate-400 mb-2">Partner #{idx + 1}</p>
+                    <div className="space-y-2">
+                      <Input label="Full Name" value={p.name} onChange={(e) => handlePartnerChange(p.id, 'name', e.target.value)} className="!mb-0" />
+                      <Input label="Designation" value={p.designation} onChange={(e) => handlePartnerChange(p.id, 'designation', e.target.value)} className="!mb-0" />
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="border-t border-slate-200 my-4 pt-4">

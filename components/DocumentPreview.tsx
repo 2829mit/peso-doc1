@@ -1,5 +1,5 @@
 import React from 'react';
-import { DocumentData, Vehicle } from '../types';
+import { DocumentData } from '../types';
 
 interface DocumentPreviewProps {
   data: DocumentData;
@@ -34,7 +34,11 @@ const HeaderDate: React.FC<{ date: string; address?: string }> = ({ date, addres
 );
 
 export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ data }) => {
-  
+  // Helper to extract address without "To," for Page 6 custom header
+  const getAddressWithoutTo = (addr: string) => {
+    return addr.replace(/^To,\s*\n?/i, '').trim();
+  };
+
   return (
     <div className="print:w-full print:absolute print:top-0 print:left-0 print:z-50">
       
@@ -57,24 +61,17 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ data }) => {
           <p className="font-bold mb-6">COMPANY PARTNERS / DIRECTORS: -</p>
           
           <div className="flex flex-col gap-12">
-            <div className="flex items-end justify-between">
-              <div>
-                1) {data.authPersonName} ({data.authPersonDesignation})
+            {data.partners.map((p, i) => (
+               <div key={p.id} className="flex items-end justify-between">
+                <div>
+                  {i + 1}) {p.name || '___________'} ({p.designation || '___________'})
+                </div>
+                <div className="border-t border-dashed border-black w-48 text-center text-xs">SIGN</div>
               </div>
-              <div className="border-t border-dashed border-black w-48 text-center text-xs">SIGN</div>
-            </div>
-             <div className="flex items-end justify-between">
-              <div>
-                2) {data.authPersonName} ({data.authPersonDesignation})
-              </div>
-              <div className="border-t border-dashed border-black w-48 text-center text-xs">SIGN</div>
-            </div>
-             <div className="flex items-end justify-between">
-              <div>
-                3) {data.authPersonName} ({data.authPersonDesignation})
-              </div>
-              <div className="border-t border-dashed border-black w-48 text-center text-xs">SIGN</div>
-            </div>
+            ))}
+            {data.partners.length === 0 && (
+               <p className="text-gray-400 italic text-sm">No partners listed.</p>
+            )}
           </div>
         </div>
       </PageWrapper>
@@ -127,7 +124,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ data }) => {
         <p className="mb-12">Specimen Signature,</p>
 
         <div className="mb-12">
-          <p className="mb-2">( &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )</p>
+          <p className="mb-2">( {"\u00A0".repeat(40)} )</p>
           <p className="font-bold">Shailesh Khochare</p>
         </div>
 
@@ -203,7 +200,13 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ data }) => {
 
       {/* Page 6: List of vehicles */}
       <PageWrapper>
-        <HeaderDate date={data.date} address={data.circleOfficeAddress} />
+        <div className="flex justify-between items-baseline mb-2">
+           <div>To,</div>
+           <div>Date: - {data.date}</div>
+        </div>
+        <div className="whitespace-pre-wrap mb-8">
+           {getAddressWithoutTo(data.circleOfficeAddress)}
+        </div>
 
         <div className="mb-6 font-bold underline">
           Sub: - List of the vehicles in our possession for fueling from the Portable Service Station.

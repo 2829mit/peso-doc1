@@ -10,33 +10,16 @@ import {
   BorderStyle,
   AlignmentType,
   UnderlineType,
-  Header,
-  Footer,
 } from "docx";
 import FileSaver from "file-saver";
 import { DocumentData } from "../types";
 
-const { saveAs } = FileSaver;
+// Robustly handle file-saver import (CommonJS vs ESM default)
+// @ts-ignore
+const saveAs = FileSaver.saveAs || FileSaver;
 
 const FONT_FAMILY = "Times New Roman";
 const FONT_SIZE = 24; // 12pt
-
-const createText = (text: string, options?: { bold?: boolean; underline?: boolean; size?: number, break?: number }) => {
-  const runs = [];
-  if (options?.break) {
-    for (let i = 0; i < options.break; i++) {
-        runs.push(new TextRun({ break: 1 }));
-    }
-  }
-  runs.push(new TextRun({
-    text: text,
-    font: FONT_FAMILY,
-    size: options?.size || FONT_SIZE,
-    bold: options?.bold,
-    underline: options?.underline ? { type: UnderlineType.SINGLE } : undefined,
-  }));
-  return runs;
-};
 
 const createHeaderDate = (address: string, date: string) => {
   return new Table({
@@ -74,54 +57,21 @@ const createHeaderDate = (address: string, date: string) => {
   });
 };
 
-const createSignatory = (data: DocumentData) => {
-  return [
-    new Paragraph({
-      spacing: { before: 400 }, // Space before
-      children: [new TextRun({ text: "Authorized Signatory", bold: true, font: FONT_FAMILY, size: FONT_SIZE })],
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: `NAME: ${data.authPersonName || "____________________"}`, font: FONT_FAMILY, size: FONT_SIZE })],
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: `DESIGNATION: ${data.authPersonDesignation || "____________________"}`, font: FONT_FAMILY, size: FONT_SIZE })],
-    }),
-    new Paragraph({
-      spacing: { before: 800 }, // Space for signature
-      border: {
-        top: { style: BorderStyle.SINGLE, size: 1, space: 1, color: "000000" }
-      },
-      indent: { left: 0 },
-      // Note: Borders on paragraph apply to the block. To make a short line is hard.
-      // We will use text decoration or a small table for "STAMP & SIGNATURE" line.
-      // Actually, standard approach:
-      children: [
-         new TextRun({ text: "STAMP & SIGNATURE", bold: true, size: 20, font: FONT_FAMILY })
-      ],
-    })
-  ];
-};
-
-// Better signatory implementation using a small table to control width of the line
 const createSignatoryBlock = (data: DocumentData) => {
     return [
         new Paragraph({ spacing: { before: 400 }, children: [new TextRun({ text: "Authorized Signatory", bold: true, font: FONT_FAMILY, size: FONT_SIZE })] }),
         new Paragraph({ children: [new TextRun({ text: `NAME: ${data.authPersonName || "____________________"}`, font: FONT_FAMILY, size: FONT_SIZE })] }),
         new Paragraph({ children: [new TextRun({ text: `DESIGNATION: ${data.authPersonDesignation || "____________________"}`, font: FONT_FAMILY, size: FONT_SIZE })] }),
-        new Paragraph({ text: "", spacing: { before: 600 } }), // Space
+        new Paragraph({ text: "", spacing: { before: 600 } }), 
         new Paragraph({ 
             children: [new TextRun({ text: "STAMP & SIGNATURE", bold: true, size: 18, font: FONT_FAMILY })],
             border: { top: { style: BorderStyle.SINGLE, size: 6, space: 1 } },
-            indent: { right: 5000 } // Hack to make line shorter? No, paragraph border is full width usually.
+            indent: { right: 5000 } 
         })
-        // To strictly limit line width, we would need a table cell. But full width line is often acceptable or we use tab stops.
-        // Let's stick to simple text for now to avoid complexity.
     ];
 };
 
 export const generateDocument = async (data: DocumentData) => {
-  const sections = [];
-
   // --- Page 1 ---
   const page1 = [
     createHeaderDate(data.circleOfficeAddress || "To,\n(Address of respective circle office)", data.date),
@@ -149,17 +99,15 @@ export const generateDocument = async (data: DocumentData) => {
       spacing: { before: 600 },
       children: [new TextRun({ text: "COMPANY PARTNERS / DIRECTORS: -", bold: true, font: FONT_FAMILY, size: FONT_SIZE })]
     }),
-    ...[1, 2, 3].map(i => [
-        new Paragraph({
-            spacing: { before: 400 },
-            children: [
-                new TextRun({ text: `${i}) ${data.authPersonName} (${data.authPersonDesignation})`, font: FONT_FAMILY, size: FONT_SIZE }),
-                new TextRun({ text: "\t\t----------SIGN-------------------", font: FONT_FAMILY, size: 20 })
-            ],
-            tabStops: [{ type: "right", position: 9000 }] // Right align sign
-        })
-    ]).flat(),
-    new Paragraph({ children: [], pageBreakBefore: true }) // Page Break
+    ...data.partners.map((p, i) => new Paragraph({
+        spacing: { before: 400 },
+        children: [
+            new TextRun({ text: `${i + 1}) ${p.name || ''} (${p.designation || ''})`, font: FONT_FAMILY, size: FONT_SIZE }),
+            new TextRun({ text: "\t\t----------SIGN-------------------", font: FONT_FAMILY, size: 20 })
+        ],
+        tabStops: [{ type: "right", position: 9000 }] 
+    })),
+    new Paragraph({ children: [], pageBreakBefore: true }) 
   ];
 
   // --- Page 2 ---
@@ -279,8 +227,26 @@ export const generateDocument = async (data: DocumentData) => {
       vehicleRows.push(new TableRow({ children: [ new TableCell({ columnSpan: 5, children: [new Paragraph("No vehicles listed")] }) ] }));
   }
 
+  // Helper to remove "To," for Page 6 header
+  const cleanAddressPage6 = (data.circleOfficeAddress || "").replace(/^To,\s*\n?/i, '').trim();
+  const addressParagraphsPage6 = cleanAddressPage6.split('\n').map(line => new Paragraph({
+      children: [new TextRun({ text: line, font: FONT_FAMILY, size: FONT_SIZE })]
+  }));
+
   const page6 = [
-    createHeaderDate(data.circleOfficeAddress || "To,\n(Address of respective circle office)", data.date),
+    new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE } },
+        rows: [
+            new TableRow({
+                children: [
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "To,", font: FONT_FAMILY, size: FONT_SIZE })] })] }),
+                    new TableCell({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Date: - ${data.date}`, font: FONT_FAMILY, size: FONT_SIZE })] })] })
+                ]
+            })
+        ]
+    }),
+    ...addressParagraphsPage6,
     new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "Sub: - List of the vehicles in our possession for fueling from the Portable Service Station.", bold: true, underline: { type: UnderlineType.SINGLE }, font: FONT_FAMILY, size: FONT_SIZE })] }),
     new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "Dear Sir,", font: FONT_FAMILY, size: FONT_SIZE })] }),
     new Paragraph({ spacing: { before: 200, after: 200 }, alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: `We are providing a list of the vehicles which are in our possession at our working site engaged in various ${data.businessType} activity at ${data.siteAddress}`, font: FONT_FAMILY, size: FONT_SIZE })] }),

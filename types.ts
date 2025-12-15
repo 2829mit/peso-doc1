@@ -6,6 +6,12 @@ export interface Vehicle {
   tankCapacity: string;
 }
 
+export interface Partner {
+  id: string;
+  name: string;
+  designation: string;
+}
+
 export interface DocumentData {
   date: string;
   circleOfficeAddress: string;
@@ -23,6 +29,7 @@ export interface DocumentData {
   omcName: string; // Oil Marketing Company
   businessAddress: string;
   vehicles: Vehicle[];
+  partners: Partner[];
 }
 
 const getFormattedDate = () => {
@@ -51,5 +58,8 @@ export const initialData: DocumentData = {
   businessAddress: "",
   vehicles: [
     { id: '1', vehicleNumber: '', make: '', model: '', tankCapacity: '' }
+  ],
+  partners: [
+    { id: '1', name: '', designation: '' }
   ]
 };
