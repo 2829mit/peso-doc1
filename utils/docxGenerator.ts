@@ -63,11 +63,9 @@ const createSignatoryBlock = (data: DocumentData) => {
         new Paragraph({ spacing: { before: 400 }, children: [new TextRun({ text: "Authorized Signatory", bold: true, font: FONT_FAMILY, size: FONT_SIZE })] }),
         new Paragraph({ children: [new TextRun({ text: `NAME: ${data.authPersonName || "____________________"}`, font: FONT_FAMILY, size: FONT_SIZE })] }),
         new Paragraph({ children: [new TextRun({ text: `DESIGNATION: ${data.authPersonDesignation || "____________________"}`, font: FONT_FAMILY, size: FONT_SIZE })] }),
-        new Paragraph({ text: "", spacing: { before: 600 } }), 
         new Paragraph({ 
-            children: [new TextRun({ text: "STAMP & SIGNATURE", bold: true, size: 18, font: FONT_FAMILY })],
-            border: { top: { style: BorderStyle.SINGLE, size: 6, space: 1 } },
-            indent: { right: 5000 } 
+            spacing: { before: 200 },
+            children: [new TextRun({ text: "STAMP & SIGNATURE", size: FONT_SIZE, font: FONT_FAMILY })]
         })
     ];
 };
@@ -268,7 +266,7 @@ export const generateDocument = async (data: DocumentData) => {
 
   // --- Page 7: Issuance of NOC ---
   const page7 = [
-    createHeaderDate("To,\nThe Collector and district Magistrate", data.date),
+    createHeaderDate("To, The Collector and district Magistrate", data.date),
     new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "SUB: Issuance of No Objection Certificate for Diesel dispensing storage facility", bold: true, underline: { type: UnderlineType.SINGLE }, font: FONT_FAMILY, size: FONT_SIZE })] }),
     new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "Dear Sir,", font: FONT_FAMILY, size: FONT_SIZE })] }),
     new Paragraph({ spacing: { before: 200 }, alignment: AlignmentType.JUSTIFIED, children: [
@@ -372,6 +370,39 @@ export const generateDocument = async (data: DocumentData) => {
       ...createSignatoryBlock(data)
   ];
 
+  // --- Page 10: Self Declaration ---
+  const page10 = [
+    createHeaderDate(data.circleOfficeAddress || "To,\n(Address of respective circle office)", data.date),
+    new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "Sub:- Self Declaration for consumption of fuel", bold: true, underline: { type: UnderlineType.SINGLE }, font: FONT_FAMILY, size: FONT_SIZE })] }),
+    new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "Dear Sir,", font: FONT_FAMILY, size: FONT_SIZE })] }),
+    new Paragraph({ 
+        spacing: { before: 200 }, 
+        alignment: AlignmentType.JUSTIFIED,
+        children: [new TextRun({ text: "We wish to inform that the fuel is required for the self-consumption purpose in to our heavy vehicles and equipment and site details for the installation is as follows:", font: FONT_FAMILY, size: FONT_SIZE })] 
+    }),
+    new Paragraph({ 
+        spacing: { before: 400 }, 
+        children: [
+            new TextRun({ text: "Name: ", bold: true, font: FONT_FAMILY, size: FONT_SIZE }),
+            new TextRun({ text: data.companyName, font: FONT_FAMILY, size: FONT_SIZE })
+        ] 
+    }),
+    new Paragraph({ 
+        spacing: { before: 200 }, 
+        children: [
+            new TextRun({ text: "Address: ", bold: true, font: FONT_FAMILY, size: FONT_SIZE }),
+            // Handle multiline address nicely
+            ...data.siteAddress.split('\n').flatMap((line, i) => [
+                i > 0 ? new TextRun({ text: "", break: 1 }) : null,
+                new TextRun({ text: line, font: FONT_FAMILY, size: FONT_SIZE })
+            ]).filter((x): x is TextRun => x !== null)
+        ] 
+    }),
+    new Paragraph({ spacing: { before: 400 }, children: [new TextRun({ text: "Thanking You.", font: FONT_FAMILY, size: FONT_SIZE })] }),
+    new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: "Yours faithfully,", font: FONT_FAMILY, size: FONT_SIZE })] }),
+    ...createSignatoryBlock(data)
+  ];
+
   const doc = new Document({
     sections: [{
       properties: {},
@@ -384,7 +415,8 @@ export const generateDocument = async (data: DocumentData) => {
           ...page6,
           ...page7,
           ...page8,
-          ...page9
+          ...page9,
+          ...page10
       ]
     }]
   });

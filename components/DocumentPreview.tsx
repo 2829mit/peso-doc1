@@ -10,9 +10,7 @@ const FooterSignatory: React.FC<{ data: DocumentData }> = ({ data }) => (
     <p className="font-bold mb-1">Authorized Signatory</p>
     <p>NAME: {data.authPersonName || "____________________"}</p>
     <p>DESIGNATION: {data.authPersonDesignation || "____________________"}</p>
-    <div className="mt-4 border-t border-black w-48 pt-1">
-      <p className="text-xs font-bold">STAMP & SIGNATURE</p>
-    </div>
+    <p className="mt-2">STAMP & SIGNATURE</p>
   </div>
 );
 
@@ -253,7 +251,7 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ data }) => {
 
       {/* Page 7: Issuance of NOC */}
       <PageWrapper>
-        <HeaderDate date={data.date} address="To,\nThe Collector and district Magistrate" />
+        <HeaderDate date={data.date} address="To, The Collector and district Magistrate" />
 
         <div className="mb-6 font-bold underline">
           SUB: Issuance of No Objection Certificate for Diesel dispensing storage facility
@@ -373,6 +371,34 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({ data }) => {
            <FooterSignatory data={data} />
         </div>
        </PageWrapper>
+
+      {/* Page 10: Self Declaration */}
+      <PageWrapper>
+        <HeaderDate date={data.date} address={data.circleOfficeAddress} />
+
+        <div className="mb-6 font-bold underline">
+          Sub:- Self Declaration for consumption of fuel
+        </div>
+
+        <p className="mb-4">Dear Sir,</p>
+
+        <p className="mb-8">
+          We wish to inform that the fuel is required for the self-consumption purpose in to our heavy vehicles and equipment and site details for the installation is as follows:
+        </p>
+
+        <div className="mb-8">
+            <p className="mb-2"><strong>Name:</strong> {data.companyName}</p>
+            <div className="mb-2 flex items-start">
+              <strong className="mr-2 whitespace-nowrap">Address:</strong>
+              <span className="whitespace-pre-wrap">{data.siteAddress}</span>
+            </div>
+        </div>
+
+        <p className="mb-4">Thanking You.</p>
+        <p className="mb-8">Yours faithfully,</p>
+
+        <FooterSignatory data={data} />
+      </PageWrapper>
     </div>
   );
 };
