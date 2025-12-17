@@ -3,14 +3,30 @@ import { DocumentData, initialData, Vehicle, Partner } from './types';
 import { PESO_ADDRESSES, OMC_OPTIONS } from './constants';
 import { DocumentPreview } from './components/DocumentPreview';
 import { Input, TextArea, Select } from './components/Input';
-import { FileText, Settings, Truck, MapPin, Building, Plus, Trash2, Download, Users } from 'lucide-react';
+import { FileText, Settings, Truck, MapPin, Building, Plus, Trash2, Download, Users, Lock, User } from 'lucide-react';
 import { generateDocument } from './utils/docxGenerator';
 
 const App: React.FC = () => {
+  // Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+
   const [data, setData] = useState<DocumentData>(initialData);
   const [activeTab, setActiveTab] = useState<'general' | 'site' | 'vehicles'>('general');
   const [selectedCircleKey, setSelectedCircleKey] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (username === "anuradha" && password === "Repos@123") {
+      setIsAuthenticated(true);
+      setAuthError("");
+    } else {
+      setAuthError("Invalid credentials. Please try again.");
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -87,6 +103,78 @@ const App: React.FC = () => {
     }
   };
 
+  // Login Screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+          <div className="bg-blue-600 p-8 text-center">
+            <div className="inline-flex p-3 bg-white/20 rounded-xl mb-4 backdrop-blur-sm">
+              <FileText className="text-white w-10 h-10" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-1">DocuGen Pro</h1>
+            <p className="text-blue-100 text-sm">Compliance Generator System</p>
+          </div>
+          
+          <div className="p-8">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 text-center">Welcome Back</h2>
+            
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Username</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-slate-50 focus:bg-white"
+                    placeholder="Enter username"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Password</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-slate-50 focus:bg-white"
+                    placeholder="Enter password"
+                  />
+                </div>
+              </div>
+
+              {authError && (
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-center animate-fadeIn">
+                  <p className="text-sm text-red-600 font-medium">{authError}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-600/20 transition-all transform active:scale-[0.98]"
+              >
+                Sign In
+              </button>
+            </form>
+          </div>
+          <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
+            <p className="text-xs text-slate-400">© 2025 DocuGen Pro. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main App
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
       
@@ -96,10 +184,18 @@ const App: React.FC = () => {
           <div className="p-2 bg-blue-600 rounded-lg">
             <FileText className="text-white w-6 h-6" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-bold text-lg text-slate-800 leading-tight">DocuGen Pro</h1>
             <p className="text-xs text-slate-500">Compliance Generator</p>
           </div>
+          {/* Logout Button */}
+          <button 
+            onClick={() => setIsAuthenticated(false)}
+            className="text-slate-400 hover:text-red-500 transition-colors p-1"
+            title="Sign Out"
+          >
+            <Lock className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Tabs */}
